@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recupera Fácil - Reembolso de Golpes Online</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variáveis CSS para gerenciamento de cores */
+        :root {
+            --primary-color: #009639; /* Verde Principal */
+            --primary-hover: #007f2d;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --light-text-color: #6a6a6a;
+            --border-color: #ddd;
+            --container-bg: #ffffff;
+            --disabled-color: #6c757d; /* Cinza para botão desativado */
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 20px 15px;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 30px auto;
+            padding: 30px;
+            background-color: var(--container-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .description {
+            font-size: 1rem;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--light-text-color);
+            padding: 0 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 14px 12px;
+            margin: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="email"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 150, 57, 0.2);
+            outline: none;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 16px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.99);
+        }
+        
+        /* Estilo para botão desativado/carregando */
+        button:disabled {
+            background-color: var(--disabled-color);
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 30px;
+            color: var(--light-text-color);
+            padding: 0 10px;
+        }
+    </style>
+    <script>
+        const REDIRECT_LINK = 'https://siteoficial-url.github.io/recuperafacill/';
+        const INITIAL_DELAY_SECONDS = 5;
+
+        // Função de formatação de CPF (máscara)
+        function formatCPF(cpfInput) {
+            let cpf = cpfInput.value.replace(/\D/g, ''); 
+            cpf = cpf.substring(0, 11); 
+
+            if (cpf.length > 3) cpf = cpf.replace(/(\d{3})(\d)/, '$1.$2');
+            if (cpf.length > 6) cpf = cpf.replace(/(\d{3})(\d)/, '$1.$2');
+            if (cpf.length > 9) cpf = cpf.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+
+            cpfInput.value = cpf;
+        }
+
+        // Função para validar matematicamente o CPF (inalterada)
+        function isValidCPF(cpf) {
+            cpf = cpf.replace(/[^\d]+/g, '');
+
+            if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
+                return false;
+            }
+
+            let sum;
+            let rest;
+            
+            sum = 0;
+            for (let i = 1; i <= 9; i++) {
+                sum = sum + parseInt(cpf.substring(i - 1, i)) * (11 - i);
+            }
+            rest = (sum * 10) % 11;
+
+            if ((rest === 10) || (rest === 11)) rest = 0;
+            if (rest !== parseInt(cpf.substring(9, 10))) return false;
+
+            sum = 0;
+            for (let i = 1; i <= 10; i++) {
+                sum = sum + parseInt(cpf.substring(i - 1, i)) * (12 - i);
+            }
+            rest = (sum * 10) % 11;
+
+            if ((rest === 10) || (rest === 11)) rest = 0;
+            if (rest !== parseInt(cpf.substring(10, 11))) return false;
+
+            return true;
+        }
+
+        // Função para validar campos (inalterada)
+        function validateFields() {
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const cpfInput = document.getElementById('cpf');
+            const cpf = cpfInput.value.replace(/\D/g, '');
+
+            if (!name || !email || !cpf) {
+                alert("ERRO: Todos os campos são obrigatórios. Por favor, preencha todos os campos.");
+                return false;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("ERRO: Por favor, insira um endereço de e-mail válido.");
+                return false;
+            }
+
+            if (!isValidCPF(cpf)) {
+                alert("ERRO: O CPF inserido é inválido. Verifique o número e tente novamente.");
+                cpfInput.focus();
+                return false;
+            }
+
+            return true;
+        }
+        
+        // NOVO: Função para iniciar a contagem regressiva
+        function startCountdown(button) {
+            let seconds = INITIAL_DELAY_SECONDS;
+            
+            button.disabled = true;
+            button.textContent = `VERIFICANDO... AGUARDE ${seconds}s`;
+
+            const countdownInterval = setInterval(() => {
+                seconds--;
+                
+                if (seconds > 0) {
+                    button.textContent = `VERIFICANDO... AGUARDE ${seconds}s`;
+                } else {
+                    clearInterval(countdownInterval);
+                    button.textContent = 'REDIRECIONANDO...';
+                    window.location.href = REDIRECT_LINK;
+                }
+            }, 1000); // Roda a cada 1 segundo
+        }
+
+        // Função principal para validar e iniciar o redirecionamento com delay
+        function validateAndRedirect(event) {
+            event.preventDefault();
+            const button = document.getElementById('submit-button');
+
+            if (button.disabled) return; // Evita dupla submissão
+
+            if (!validateFields()) {
+                return;
+            }
+            
+            // Se validado, inicia a contagem regressiva
+            startCountdown(button);
+        }
+    </script>
+</head>
+<body>
+    <header>
+        RECUPERA FÁCIL
+    </header>
+    <div class="container">
+        <div class="title">
+            Novo Programa de Reembolso de Golpes Online!
+        </div>
+        <div class="description">
+            Perdeu dinheiro em golpes na internet? Faça sua consulta gratuita e descubra o valor pendente que você pode resgatar, atualizado com juros e correções!
+        </div>
+        <form onsubmit="validateAndRedirect(event)">
+            <label for="name">Nome Completo</label>
+            <input type="text" id="name" name="name" required placeholder="Digite seu nome completo">
+
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" required placeholder="Digite seu melhor e-mail">
+
+            <label for="cpf">CPF</label>
+            <input type="text" id="cpf" name="cpf" required placeholder="000.000.000-00" maxlength="14" oninput="formatCPF(this)">
+
+            <button type="submit" id="submit-button">VERIFICAR MEU REEMBOLSO AGORA</button>
+        </form>
+        <div class="footer">
+            *Essa consulta é pública. Os valores de indenização são preliminares e podem ser ajustados.
+        </div>
+    </div>
+</body>
+</html>
